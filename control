@@ -1,0 +1,9 @@
+Package: com.gilshahar7.avlock
+Name: AVLock
+Depends: mobilesubstrate
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: gilshahar7
+Author: gilshahar7
+Section: Tweaks
