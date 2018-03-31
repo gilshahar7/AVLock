@@ -10,11 +10,28 @@
 @end
 
 
+@interface AVButton : UIView
+@end
 
 @interface AVTransportControlsView : UIView
 -(void)deviceOrientationDidChange;
-//@property (assign, nonatomic) AVButton *skipBackButton;
+@property (assign, nonatomic) AVButton *skipBackButton;
 @end
+
+@interface AVPlaybackControlsView
+@property (assign, nonatomic) AVTransportControlsView *transportControlsView;
+@end
+
+@interface AVPlayerViewControllerContentView
+@property (assign, nonatomic) AVPlaybackControlsView *playbackControlsView;
+@end
+
+@interface AVFullScreenViewController
+@property (assign, nonatomic) AVPlayerViewControllerContentView *contentView;
+@end
+
+
+
 
 extern "C" CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
 
@@ -51,6 +68,12 @@ static void firstUpdate(CFNotificationCenterRef center, void *observer, CFString
 
 }
 
+%hook AVFullScreenViewController
+-(void)viewDidLayoutSubviews{
+	%orig;
+	[self.contentView.playbackControlsView.transportControlsView deviceOrientationDidChange];
+}
+%end
 
 %hook SBOrientationLockManager
 -(SBOrientationLockManager*)init{
@@ -113,13 +136,6 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("avlock.firstUpdate"), (void*)myObserver, NULL, true);
 	button.contentMode = UIViewContentModeScaleAspectFit;
 
-	UIInterfaceOrientation orientation =[UIApplication sharedApplication].statusBarOrientation;
-	if (orientation == UIInterfaceOrientationLandscapeRight || orientation == UIInterfaceOrientationLandscapeLeft){
-		button.frame = CGRectMake(6.5, -40, 46, 46);
-	}
-	else if(orientation == UIInterfaceOrientationPortrait){
-		button.frame = CGRectMake(([UIScreen mainScreen].bounds.size.width / 2) - 142.5, 43, 46, 46);
-	}
 	button.imageEdgeInsets = UIEdgeInsetsMake(10, 10, 10, 10);
 
 	[self addSubview:button];
@@ -136,14 +152,16 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
     CFNotificationCenterRemoveObserver ( CFNotificationCenterGetDarwinNotifyCenter(), (void*)myObserver, NULL, NULL); 
 }
 
+
+
 %new
 -(void)deviceOrientationDidChange{
 	UIInterfaceOrientation orientation =[UIApplication sharedApplication].statusBarOrientation;
 	if (orientation == UIInterfaceOrientationLandscapeRight || orientation == UIInterfaceOrientationLandscapeLeft){
-		button.frame = CGRectMake(6.5, -40, 46, 46);
+		button.frame = CGRectMake(self.skipBackButton.frame.origin.x-13.5, -40, 46, 46);
 	}
 	else if(orientation == UIInterfaceOrientationPortrait){
-		button.frame = CGRectMake((self.frame.size.width / 2) - 115.5, 43, 46, 46);
+		button.frame = CGRectMake((self.skipBackButton.frame.origin.x - 62), self.skipBackButton.frame.origin.y, 46, 46);
 	}
 }
 
