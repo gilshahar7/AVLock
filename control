@@ -1,9 +1,9 @@
 Package: com.gilshahar7.avlock
 Name: AVLock
 Depends: mobilesubstrate
-Version: 0.0.1
+Version: 1.0
 Architecture: iphoneos-arm
-Description: An awesome MobileSubstrate tweak!
+Description: Add an orientation lock button to the iOS 11 stock video player
 Maintainer: gilshahar7
 Author: gilshahar7
 Section: Tweaks

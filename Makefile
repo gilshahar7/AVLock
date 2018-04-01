@@ -5,7 +5,6 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = AVLock
 AVLock_FILES = Tweak.xm
 AVLock_FRAMEWORKS = UIKit
-AVLock_PRIVATE_FRAMEWORKS = CoreTelephony AudioToolbox
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

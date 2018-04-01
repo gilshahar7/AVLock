@@ -1,6 +1,5 @@
 #define kBundlePath @"/Library/Application Support/AVLockBundle.bundle"
 
-
 @interface SBOrientationLockManager
 +(SBOrientationLockManager *)sharedInstance;
 -(bool)isUserLocked;
@@ -16,6 +15,10 @@
 @interface AVTransportControlsView : UIView
 -(void)deviceOrientationDidChange;
 @property (assign, nonatomic) AVButton *skipBackButton;
+@property (assign, nonatomic) AVButton *skipForwardButton;
+
+@property (assign, nonatomic) AVButton *standardPlayPauseButton;
+
 @end
 
 @interface AVPlaybackControlsView
@@ -69,9 +72,19 @@ static void firstUpdate(CFNotificationCenterRef center, void *observer, CFString
 }
 
 %hook AVFullScreenViewController
+int test = 30;
 -(void)viewDidLayoutSubviews{
 	%orig;
-	[self.contentView.playbackControlsView.transportControlsView deviceOrientationDidChange];
+	if(test > 1){
+		[self.contentView.playbackControlsView.transportControlsView deviceOrientationDidChange];
+		test--;;
+	}
+
+}
+
+-(void)viewDidDisappear:(bool)arg1{
+	%orig;
+	test = 10;
 }
 %end
 
@@ -156,13 +169,29 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 
 %new
 -(void)deviceOrientationDidChange{
+	double delayInSeconds = 0.13;
+dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+
+
 	UIInterfaceOrientation orientation =[UIApplication sharedApplication].statusBarOrientation;
 	if (orientation == UIInterfaceOrientationLandscapeRight || orientation == UIInterfaceOrientationLandscapeLeft){
-		button.frame = CGRectMake(self.skipBackButton.frame.origin.x-13.5, -40, 46, 46);
+
+		CGPoint point = self.standardPlayPauseButton.frame.origin;
+		point.x =  (self.skipForwardButton.frame.origin.x - 40);
+		[self.standardPlayPauseButton setFrame:CGRectMake(point.x, point.y, self.standardPlayPauseButton.frame.size.width, self.standardPlayPauseButton.frame.size.height)];
+		
+		point = self.skipBackButton.frame.origin;
+		point.x =  (self.standardPlayPauseButton.frame.origin.x - 40);
+		[self.skipBackButton setFrame:CGRectMake(point.x, point.y, self.skipBackButton.frame.size.width, self.skipBackButton.frame.size.height)];
+		
+		[button setFrame:CGRectMake(self.standardPlayPauseButton.frame.origin.x-93.5, self.standardPlayPauseButton.frame.origin.y, 46, 46)];
+		
 	}
 	else if(orientation == UIInterfaceOrientationPortrait){
 		button.frame = CGRectMake((self.skipBackButton.frame.origin.x - 62), self.skipBackButton.frame.origin.y, 46, 46);
 	}
+});
 }
 
 %new
