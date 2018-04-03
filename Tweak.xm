@@ -21,19 +21,6 @@
 
 @end
 
-@interface AVPlaybackControlsView
-@property (assign, nonatomic) AVTransportControlsView *transportControlsView;
-@end
-
-@interface AVPlayerViewControllerContentView
-@property (assign, nonatomic) AVPlaybackControlsView *playbackControlsView;
-@end
-
-@interface AVFullScreenViewController
-@property (assign, nonatomic) AVPlayerViewControllerContentView *contentView;
-@end
-
-
 
 
 extern "C" CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
@@ -71,22 +58,6 @@ static void firstUpdate(CFNotificationCenterRef center, void *observer, CFString
 
 }
 
-%hook AVFullScreenViewController
-int test = 30;
--(void)viewDidLayoutSubviews{
-	%orig;
-	if(test > 1){
-		[self.contentView.playbackControlsView.transportControlsView deviceOrientationDidChange];
-		test--;;
-	}
-
-}
-
--(void)viewDidDisappear:(bool)arg1{
-	%orig;
-	test = 10;
-}
-%end
 
 %hook SBOrientationLockManager
 -(SBOrientationLockManager*)init{
@@ -130,6 +101,7 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 
 
 %hook AVTransportControlsView
+int test = 30;
 -(AVTransportControlsView *)initWithFrame:(CGRect)frame{
     AVTransportControlsView *origself = %orig(frame);
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
@@ -163,9 +135,16 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 -(void)dealloc{
     %orig;
     CFNotificationCenterRemoveObserver ( CFNotificationCenterGetDarwinNotifyCenter(), (void*)myObserver, NULL, NULL); 
+	test = 30;
 }
 
-
+-(void)layoutSubviews{
+	%orig;
+	if(test > 1){
+		[self deviceOrientationDidChange];
+		test--;;
+	}
+}
 
 %new
 -(void)deviceOrientationDidChange{
