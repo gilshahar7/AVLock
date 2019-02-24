@@ -102,6 +102,37 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 
 %hook AVTransportControlsView
 int test = 30;
+
+// iOS 12
+-(AVTransportControlsView *)initWithFrame:(CGRect)frame styleSheet:(id)arg2 captureView:(id)arg3{
+    AVTransportControlsView *origself = %orig(frame,arg2,arg3);
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+									(void*)myObserver,
+									lockButton,
+									CFSTR("avlock.lockButton"),
+									NULL,  
+									CFNotificationSuspensionBehaviorDeliverImmediately);
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+									(void*)myObserver,
+									unlockButton,
+									CFSTR("avlock.unlockButton"),
+									NULL,  
+									CFNotificationSuspensionBehaviorDeliverImmediately);
+	button = [UIButton buttonWithType:UIButtonTypeCustom];
+	[button addTarget:self action:@selector(orientationButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+	CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("avlock.firstUpdate"), (void*)myObserver, NULL, true);
+	button.contentMode = UIViewContentModeScaleAspectFit;
+
+	button.imageEdgeInsets = UIEdgeInsetsMake(10, 10, 10, 10);
+
+	[self addSubview:button];
+	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
+	
+	return origself;
+}
+
+// iOS 11
 -(AVTransportControlsView *)initWithFrame:(CGRect)frame{
     AVTransportControlsView *origself = %orig(frame);
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
@@ -129,7 +160,6 @@ int test = 30;
 	
 	return origself;
 }
-
 
 
 -(void)dealloc{
