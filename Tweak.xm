@@ -21,7 +21,8 @@
 
 @end
 
-
+//#import <AudioToolbox/AudioToolbox.h>
+//#import <AudioToolbox/AudioServices.h>
 
 extern "C" CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
 
@@ -66,13 +67,13 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                     (void*)myObserver,
                                     toggle,
                                     CFSTR("avlock.toggle"),
-                                    NULL,  
+                                    NULL,
                                     CFNotificationSuspensionBehaviorDeliverImmediately);
 CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                     (void*)myObserver,
                                     firstUpdate,
                                     CFSTR("avlock.firstUpdate"),
-                                    NULL,  
+                                    NULL,
                                     CFNotificationSuspensionBehaviorDeliverImmediately);
 
   return self;
@@ -96,12 +97,23 @@ CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 }
 
 %end
+double delayInSeconds = 0.13;
 
-
-
+%hook AVPlaybackControlsVisibilityControllerItem
+-(BOOL)wantsAnimatedTransitionToHidden:(BOOL)arg1 alpha:(double)arg2{
+  if(!arg1){
+    delayInSeconds = 0.0;
+    [[NSNotificationCenter defaultCenter] postNotificationName:UIDeviceOrientationDidChangeNotification object:nil];
+    //AudioServicesPlaySystemSound(1103);
+    delayInSeconds = 0.13;
+  }
+  return %orig;
+}
+%end
 
 %hook AVTransportControlsView
 int test = 30;
+
 
 // iOS 12
 -(AVTransportControlsView *)initWithFrame:(CGRect)frame styleSheet:(id)arg2 captureView:(id)arg3{
@@ -110,13 +122,13 @@ int test = 30;
 									(void*)myObserver,
 									lockButton,
 									CFSTR("avlock.lockButton"),
-									NULL,  
+									NULL,
 									CFNotificationSuspensionBehaviorDeliverImmediately);
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 									(void*)myObserver,
 									unlockButton,
 									CFSTR("avlock.unlockButton"),
-									NULL,  
+									NULL,
 									CFNotificationSuspensionBehaviorDeliverImmediately);
 	button = [UIButton buttonWithType:UIButtonTypeCustom];
 	[button addTarget:self action:@selector(orientationButtonPressed) forControlEvents:UIControlEventTouchUpInside];
@@ -128,7 +140,7 @@ int test = 30;
 	[self addSubview:button];
 	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
-	
+
 	return origself;
 }
 
@@ -139,13 +151,13 @@ int test = 30;
 									(void*)myObserver,
 									lockButton,
 									CFSTR("avlock.lockButton"),
-									NULL,  
+									NULL,
 									CFNotificationSuspensionBehaviorDeliverImmediately);
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 									(void*)myObserver,
 									unlockButton,
 									CFSTR("avlock.unlockButton"),
-									NULL,  
+									NULL,
 									CFNotificationSuspensionBehaviorDeliverImmediately);
 	button = [UIButton buttonWithType:UIButtonTypeCustom];
 	[button addTarget:self action:@selector(orientationButtonPressed) forControlEvents:UIControlEventTouchUpInside];
@@ -157,14 +169,14 @@ int test = 30;
 	[self addSubview:button];
 	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
-	
+
 	return origself;
 }
 
 
 -(void)dealloc{
     %orig;
-    CFNotificationCenterRemoveObserver ( CFNotificationCenterGetDarwinNotifyCenter(), (void*)myObserver, NULL, NULL); 
+    CFNotificationCenterRemoveObserver ( CFNotificationCenterGetDarwinNotifyCenter(), (void*)myObserver, NULL, NULL);
 	test = 30;
 }
 
@@ -178,7 +190,7 @@ int test = 30;
 
 %new
 -(void)deviceOrientationDidChange{
-	double delayInSeconds = 0.13;
+
 dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 
@@ -189,13 +201,13 @@ dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 		CGPoint point = self.standardPlayPauseButton.frame.origin;
 		point.x =  (self.skipForwardButton.frame.origin.x - 40);
 		[self.standardPlayPauseButton setFrame:CGRectMake(point.x, point.y, self.standardPlayPauseButton.frame.size.width, self.standardPlayPauseButton.frame.size.height)];
-		
+
 		point = self.skipBackButton.frame.origin;
 		point.x =  (self.standardPlayPauseButton.frame.origin.x - 40);
 		[self.skipBackButton setFrame:CGRectMake(point.x, point.y, self.skipBackButton.frame.size.width, self.skipBackButton.frame.size.height)];
-		
+
 		[button setFrame:CGRectMake(self.standardPlayPauseButton.frame.origin.x-93.5, self.standardPlayPauseButton.frame.origin.y, 46, 46)];
-		
+
 	}
 	else if(orientation == UIInterfaceOrientationPortrait){
 		button.frame = CGRectMake((self.skipBackButton.frame.origin.x - 62), self.skipBackButton.frame.origin.y, 46, 46);
